@@ -30,4 +30,4 @@ For each texture, four audio files are provided:
 - All audio is sampled at 16 kHz
 - Authors and institutional affiliation withheld for double-blind review
 
-The snippets, PANN model weights, and textures used for FAD and Diversity tests are given at the following google drive link (https://drive.google.com/file/d/1N_QTBDJD4DcFJq0D9nDd91ShDf0mnhBn/view?usp=sharing) in the form of a zip nicely. There are approximately > 4000 snippets, so this would not fit in github.
+The snippets, PANN model weights, and textures used for FAD and Diversity tests are given at the following google drive link (https://drive.google.com/file/d/1N_QTBDJD4DcFJq0D9nDd91ShDf0mnhBn/view?usp=sharing). There are approximately > 4000 snippets, so this would not fit in github.
