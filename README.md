@@ -1,10 +1,10 @@
-# Sound Texture Synthesis Using Optimal Transport — Audio Examples
+# Sound Texture Synthesis Using Optimal Transport
 
 Anonymous supplementary material for DAFx 2026 submission.
 
 ## Overview
 
-This repository contains audio examples for the paper *Sound Texture Synthesis Using Optimal Transport*. We provide synthesized outputs from three methods across ten textures, alongside the reference recordings.
+This repository contains audio examples and code for the paper *Sound Texture Synthesis Using Optimal Transport*. We provide synthesized outputs from three methods across ten textures, alongside the reference recordings.
 
 ## Listening Guide
 
