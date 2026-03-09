@@ -1,6 +1,6 @@
 # Sound Texture Synthesis Using Optimal Transport
 
-Anonymous supplementary material for DAFx 2026 submission.
+Anonymous repo for DAFx 2026 submission.
 
 ## Overview
 
