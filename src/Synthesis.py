@@ -17,7 +17,10 @@ class RISpecGaussianOT(nn.Module):
                  out_chan = [128] * 8,
                  dilations = [(1,1)] * 8,
                  strides = [(1,1)] * 8,
-                 filter_sizes = [(101,2), (53,3), (11,5), (3,3), (7, 7), (11,11), (19, 19), (27,27)],
+                 filter_sizes = [(101,2), (53,3), 
+                                 (11,5), (3,3), 
+                                 (7, 7), (11,11), 
+                                 (19, 19), (27,27)],
                  n_fft = 512):
         '''
         ref_waveform: reference waveform
@@ -29,8 +32,14 @@ class RISpecGaussianOT(nn.Module):
         self.ref_waveform = ref_waveform
         #convolutions for shallow CNN
         self.convs = nn.ModuleList([
-                                      nn.Conv2d(in_channels=2, out_channels=out_chan[i], kernel_size=filter_sizes[i],
-                                                stride=strides[i], dilation=dilations[i], groups=1, padding='valid', bias=False).to(device)
+                                      nn.Conv2d(in_channels=2, 
+                                                out_channels=out_chan[i], 
+                                                kernel_size=filter_sizes[i],
+                                                stride=strides[i], 
+                                                dilation=dilations[i], 
+                                                groups=1, 
+                                                padding='valid', 
+                                                bias=False).to(device)
                                       for i in range(len(filter_sizes))
                                   ])
         for conv in self.convs:
@@ -63,8 +72,6 @@ class RISpecGaussianOT(nn.Module):
              else:
                  out = self.relu(conv(RI_spec))
             #  #squeeze ensures everything is 3d
-            #  if dropout:
-            #     out = self.dropout(out)
              output.append(out.squeeze())
 
         return output
@@ -102,6 +109,7 @@ class RISpecGaussianOT(nn.Module):
             root_cov = eigvecs * torch.sqrt(eigval_max).unsqueeze(1)
             root_cov = root_cov @ eigvecs.transpose(1, 2)
         else:
+            #this is slow, switch to ein sum
             #tr_cov = torch.sum(torch.clamp(torch.linalg.eigvalsh(cov), min=1e-12), dim = 1)
             tr_cov =  torch.einsum("bii->b", cov)
         return root_cov, tr_cov
@@ -124,7 +132,6 @@ class RISpecGaussianOT(nn.Module):
         #mean component
         diff_squared = (ref_stat[0]- syn_stat[0])**2
         cov_prod = torch.matmul(torch.matmul(ref_stat[2], syn_stat[1]),ref_stat[2])
-        #cov_prod = torch.matmul(ref_stat[1], syn_stat[1]) #this is so stupid, but probably faster for back prop too..
         eigvals_prod = torch.linalg.eigvalsh(cov_prod)
         #OT loss can be slightly negative here...
         var_overlap = torch.sum(torch.sqrt(torch.clamp(eigvals_prod, min=1e-12)), dim = 1)
@@ -144,4 +151,5 @@ class RISpecGaussianOT(nn.Module):
         for i in range(len(syn_stats)):
             loss = self.gaussian_wasserstein_l2_dist(self.ref_stats[i], syn_stats[i])
             losses.append(loss)
+
         return torch.sum(torch.stack(losses))
