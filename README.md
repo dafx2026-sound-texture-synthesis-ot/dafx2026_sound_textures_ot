@@ -27,7 +27,7 @@ For each texture, four audio files are provided:
 
 ## Acknowledgements
 
-We would like to thank Dr. Antognini and Dr. Robebel for allowing us to use their reference textures and generated results for our quantitative comparison.
+We would like to thank Dr. Antognini and Dr. Roebel for allowing us to use their reference textures and generated results for our quantitative comparison.
 
 ## Notes
 
