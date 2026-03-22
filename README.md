@@ -25,6 +25,10 @@ For each texture, four audio files are provided:
 - Fidelity to the spectral statistics of the original texture
 - Diversity and avoidance of exact repetitions from the reference
 
+## Acknowledgements
+
+We would like to thank Dr. Antognini and Dr. Robebel for allowing us to use their reference textures and generated results for our quantitative comparison.
+
 ## Notes
 
 - All audio is sampled at 16 kHz
