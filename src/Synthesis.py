@@ -79,6 +79,9 @@ class RISpecGaussianOT(nn.Module):
     def get_stats_for_wasserstein(self, waveform, detach = False):
         """
         Wrapper to get components for OT calc for all random CNNs.
+        1) detach=True for reference: also triggers calc_root_cov=True
+           so Σ^{1/2} is precomputed once and stored, avoiding repeated
+           eigendecomposition during optimization
         """
         stats = []
         RI_spec = self.get_RI_spec(waveform)
@@ -96,10 +99,17 @@ class RISpecGaussianOT(nn.Module):
         return mu.squeeze(), cov
 
     def get_cov_sqrt_and_diag(self, cov, calc_root_cov = False):
-        '''
-        Calculates eigenfunction decomposition of a covariance matrix
-        and returns the root of the covariance matrix and trace of the matrix.
-        '''
+        """
+        Computes matrix square root and trace of a covariance matrix.
+        
+        When calc_root_cov=True (reference path):
+            - Sigma^{1/2} computed via eigendecomposition: Sigma^{1/2} = V * sqrt(D) * V^T
+            - Eigenvalues clamped to 1e-12 for numerical stability
+            - Trace computed from clamped eigenvalues (consistent with root_cov)
+        When calc_root_cov=False (synthesis path):
+            - Only trace is computed cheaply via einsum (no eigendecomposition)
+            - root_cov=None since it's not needed for the synthesis gradient path
+        """
         root_cov = None
         tr_cov = None
         if calc_root_cov:
@@ -115,7 +125,11 @@ class RISpecGaussianOT(nn.Module):
         return root_cov, tr_cov
 
     def get_layer_desc(self, tensor, calc_root_cov = False, detach = False):
-        """ Gets required components for OT calc for each layer. """
+        """
+        Returns [mu, cov, root_cov, tr_cov] for a single CNN layer output.
+        calc_root_cov=True for reference (precomputes Sigma^{1/2} once).
+        calc_root_cov=False for synthesis (only cov needed; gradients flow through cov).
+        """
         mu, cov = self.calc_moments(tensor)
         root_cov, tr_cov = self.get_cov_sqrt_and_diag(cov, calc_root_cov)
         if detach:
@@ -125,11 +139,19 @@ class RISpecGaussianOT(nn.Module):
 
     def gaussian_wasserstein_l2_dist(self, ref_stat, syn_stat):
         """
-        Wasserstein Distance between two gaussian distributions. In this case,
-        we use the mean/cov of the reference image that's created durng the
-        the init call.
+        Computes squared 2-Wasserstein distance between two Gaussians per channel,
+        then averages across channels.
+        
+        W_2^2 = ||mu_ref - mu_syn||^2 + Tr(Sigma_ref + Sigma_syn - 2*(Sigma_ref^{1/2} Sigma_syn Sigma_ref^{1/2})^{1/2})
+        
+        ref_stat: [mu, cov, root_cov, tr_cov] — precomputed, detached (no grad)
+        syn_stat: [mu, cov, None, tr_cov]     — in computation graph for backprop
+        
+        The matrix square root term is computed via eigvalsh on the product matrix
+        Sigma_ref^{1/2} @ Sigma_syn @ Sigma_ref^{1/2}, which is symmetric PSD,
+        so eigvalsh is valid and cheaper than full eigh.
+        Eigenvalues clamped to avoid sqrt of negative values due to numerical error.
         """
-        #mean component
         diff_squared = (ref_stat[0]- syn_stat[0])**2
         cov_prod = torch.matmul(torch.matmul(ref_stat[2], syn_stat[1]),ref_stat[2])
         eigvals_prod = torch.linalg.eigvalsh(cov_prod)
